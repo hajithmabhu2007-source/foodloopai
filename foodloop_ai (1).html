@@ -1,0 +1,2724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FOODLOOP AI | From Surplus to Support </title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for real-time telemetry visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+            deep: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em; }
+    .badge-success { background-color: #d1fae5; color: #065f46; }
+    .badge-warning { background-color: #fef3c7; color: #92400e; }
+    .badge-danger { background-color: #fee2e2; color: #991b1b; }
+    .badge-info { background-color: #e0f2fe; color: #075985; }
+    .badge-purple { background-color: #ede9fe; color: #5b21b6; }
+    .badge-neutral { background-color: #f1f5f9; color: #475569; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-3 pointer-events-none"></div>
+
+  <!-- Header Navigation -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="App.navigate('landing')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-deep-900 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-brand-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </div>
+        <div>
+          <span class="text-xl font-extrabold tracking-tight text-deep-900">FOOD<span class="text-brand-600">LOOP</span> AI</span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full"></span>
+        </div>
+      </div>
+
+      <div id="navbar-actions" class="flex items-center space-x-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main id="app-root" class="flex-1 flex flex-col"></main>
+
+  <!-- Global Footer -->
+  <footer class="bg-deep-900 text-slate-400 border-t border-slate-800 text-sm py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div>
+        <p class="font-medium text-slate-200">FOODLOOP AI &bull; Smart Food Redistribution Ecosystem</p>
+        <p class="text-xs text-slate-400 mt-0.5">Agriculture, FoodTech &amp; Rural Development</p>
+      </div>
+      <div class="flex items-center space-x-6 text-xs">
+        <button onclick="App.seedDatabase(true)" class="hover:text-brand-400 font-semibold underline transition">Load Sample DB Records</button>
+        <button onclick="App.purgeDatabase()" class="hover:text-rose-400 underline transition">Purge / Reset DB</button>
+        <span class="text-slate-500">v3.0 Production Single-File</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative my-8 border border-slate-100">
+      <button onclick="Auth.closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <div id="auth-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- General Action Modal -->
+  <div id="action-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div id="action-modal-card" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative my-8 border border-slate-100">
+      <button onclick="UI.closeActionModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <div id="action-modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+    const DB_NAME = 'FoodLoopAI_ProductionDB_v3';
+    const DB_VERSION = 3;
+
+    class DatabaseManager {
+      constructor() {
+        this.db = null;
+        this.isReady = false;
+      }
+
+      async init() {
+        return new Promise((resolve) => {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            const tables = [
+              'users', 'institutions', 'ngos', 'food_records',
+              'consumption_records', 'surplus_food', 'food_requests',
+              'deliveries', 'food_safety_records', 'partnerships',
+              'notifications', 'ai_predictions', 'analytics', 
+              'impact_records', 'audit_logs'
+            ];
+            tables.forEach(tbl => {
+              if (!db.objectStoreNames.contains(tbl)) {
+                db.createObjectStore(tbl, { keyPath: 'id' });
+              }
+            });
+          };
+          req.onsuccess = (e) => {
+            this.db = e.target.result;
+            this.isReady = true;
+            resolve(this.db);
+          };
+          req.onerror = () => {
+            console.warn('IndexedDB fallback to localStorage engine active.');
+            resolve(null);
+          };
+        });
+      }
+
+      async getAll(storeName) {
+        if (!this.db) return JSON.parse(localStorage.getItem('FL_' + storeName) || '[]');
+        return new Promise((resolve) => {
+          try {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          } catch(err) {
+            resolve([]);
+          }
+        });
+      }
+
+      async get(storeName, id) {
+        if (!this.db) {
+          const list = JSON.parse(localStorage.getItem('FL_' + storeName) || '[]');
+          return list.find(x => x.id === id) || null;
+        }
+        return new Promise((resolve) => {
+          try {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const req = store.get(id);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          } catch(e) {
+            resolve(null);
+          }
+        });
+      }
+
+      async put(storeName, record) {
+        if (!record.id) record.id = 'rec_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        record.updated_at = new Date().toISOString();
+        if (!record.created_at) record.created_at = record.updated_at;
+
+        if (!this.db) {
+          const list = JSON.parse(localStorage.getItem('FL_' + storeName) || '[]');
+          const idx = list.findIndex(x => x.id === record.id);
+          if (idx >= 0) list[idx] = record; else list.push(record);
+          localStorage.setItem('FL_' + storeName, JSON.stringify(list));
+          return record;
+        }
+
+        return new Promise((resolve, reject) => {
+          try {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const req = store.put(record);
+            req.onsuccess = () => resolve(record);
+            req.onerror = (e) => reject(e);
+          } catch(e) {
+            reject(e);
+          }
+        });
+      }
+
+      async delete(storeName, id) {
+        if (!this.db) {
+          let list = JSON.parse(localStorage.getItem('FL_' + storeName) || '[]');
+          list = list.filter(x => x.id !== id);
+          localStorage.setItem('FL_' + storeName, JSON.stringify(list));
+          return true;
+        }
+        return new Promise((resolve) => {
+          try {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const req = store.delete(id);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          } catch(e) {
+            resolve(false);
+          }
+        });
+      }
+
+      async clearAll() {
+        const tables = [
+          'users', 'institutions', 'ngos', 'food_records',
+          'consumption_records', 'surplus_food', 'food_requests',
+          'deliveries', 'food_safety_records', 'partnerships',
+          'notifications', 'ai_predictions', 'analytics', 
+          'impact_records', 'audit_logs'
+        ];
+        for (const t of tables) {
+          localStorage.removeItem('FL_' + t);
+          if (this.db) {
+            try {
+              const tx = this.db.transaction(t, 'readwrite');
+              tx.objectStore(t).clear();
+            } catch(e) {}
+          }
+        }
+      }
+    }
+
+    const DB = new DatabaseManager();
+
+    const CryptoUtil = {
+      async hash(password) {
+        try {
+          const enc = new TextEncoder().encode(password + '-fl_salt_2026');
+          const buf = await crypto.subtle.digest('SHA-256', enc);
+          return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch(e) {
+          return btoa(password);
+        }
+      }
+    };
+
+    const Logger = {
+      async log(userId, role, action, entity, entityId, details) {
+        try {
+          await DB.put('audit_logs', {
+            user_id: userId || 'system',
+            role: role || 'SYSTEM',
+            action,
+            entity,
+            entity_id: entityId || '',
+            details: typeof details === 'object' ? JSON.stringify(details) : details,
+            timestamp: new Date().toISOString()
+          });
+        } catch(e) {
+          console.warn('Audit logging skipped', e);
+        }
+      }
+    };
+
+    const Geo = {
+      calculateDistance(lat1, lon1, lat2, lon2) {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return 3.2;
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return parseFloat((R * c).toFixed(1));
+      }
+    };
+
+    const Store = {
+      currentUser: null,
+      currentView: 'landing',
+      activeTab: 'dashboard',
+      unreadNotificationsCount: 0,
+
+      initSession() {
+        const stored = sessionStorage.getItem('foodloop_user');
+        if (stored) {
+          try {
+            this.currentUser = JSON.parse(stored);
+          } catch(e) {
+            this.currentUser = null;
+          }
+        }
+      },
+
+      setSession(user) {
+        this.currentUser = user;
+        if (user) {
+          sessionStorage.setItem('foodloop_user', JSON.stringify(user));
+        } else {
+          sessionStorage.removeItem('foodloop_user');
+        }
+      }
+    };
+
+    const Notifications = {
+      async send(userId, role, title, message, link = '') {
+        const item = {
+          user_id: userId,
+          role,
+          title,
+          message,
+          link,
+          read: false,
+          created_at: new Date().toISOString()
+        };
+        await DB.put('notifications', item);
+        UI.showToast(title + ': ' + message, 'info');
+        await this.refreshCount();
+      },
+
+      async refreshCount() {
+        if (!Store.currentUser) return;
+        const all = await DB.getAll('notifications');
+        const userNotes = all.filter(n => (n.user_id === Store.currentUser.id || n.role === Store.currentUser.role) && !n.read);
+        Store.unreadNotificationsCount = userNotes.length;
+        const badge = document.getElementById('notif-badge');
+        if (badge) {
+          badge.textContent = userNotes.length;
+          badge.className = userNotes.length > 0 
+            ? 'absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full text-xs flex items-center justify-center font-bold'
+            : 'hidden';
+        }
+      }
+    };
+
+    const UI = {
+      showToast(msg, type = 'success') {
+        const c = document.getElementById('toast-container');
+        if (!c) return;
+        const el = document.createElement('div');
+        const colors = {
+          success: 'bg-emerald-600 text-white border-emerald-700',
+          error: 'bg-rose-600 text-white border-rose-700',
+          warning: 'bg-amber-500 text-white border-amber-600',
+          info: 'bg-deep-900 text-white border-deep-800'
+        };
+        el.className = `${colors[type] || colors.info} border px-4 py-3 rounded-xl shadow-lg pointer-events-auto flex items-center space-x-3 transition-all duration-300 transform translate-y-2 max-w-sm`;
+        el.innerHTML = `
+          <div class="text-sm font-medium flex-1">${msg}</div>
+          <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white">&times;</button>
+        `;
+        c.appendChild(el);
+        setTimeout(() => {
+          el.classList.remove('translate-y-2');
+          el.classList.add('translate-y-0');
+        }, 10);
+        setTimeout(() => {
+          el.remove();
+        }, 4500);
+      },
+
+      openActionModal(title, htmlContent, maxWidth = 'max-w-2xl') {
+        const modal = document.getElementById('action-modal');
+        const card = document.getElementById('action-modal-card');
+        card.className = `bg-white rounded-2xl shadow-2xl ${maxWidth} w-full p-6 relative my-8 border border-slate-100`;
+        document.getElementById('action-modal-content').innerHTML = `
+          <h2 class="text-xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">${title}</h2>
+          <div>${htmlContent}</div>
+        `;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      },
+
+      closeActionModal() {
+        const modal = document.getElementById('action-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      },
+
+      formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+    };
+
+    const PartnershipService = {
+      async getPartnershipsForInstitution(instId) {
+        const all = await DB.getAll('partnerships');
+        return all.filter(p => p.institution_id === instId);
+      },
+
+      async getPartnershipsForNGO(ngoId) {
+        const all = await DB.getAll('partnerships');
+        return all.filter(p => p.ngo_id === ngoId);
+      },
+
+      async isConnected(instId, ngoId) {
+        const all = await DB.getAll('partnerships');
+        return all.some(p => p.institution_id === instId && p.ngo_id === ngoId && p.status === 'ACCEPTED');
+      },
+
+      async requestConnection(ngoId, instId, requestedBy = 'NGO') {
+        const all = await DB.getAll('partnerships');
+        const existing = all.find(p => p.institution_id === instId && p.ngo_id === ngoId);
+        
+        if (existing) {
+          if (existing.status === 'ACCEPTED') {
+            UI.showToast('Already connected with this organization!', 'warning');
+            return;
+          }
+          if (existing.status === 'PENDING') {
+            UI.showToast('A connection request is already pending.', 'warning');
+            return;
+          }
+        }
+
+        const inst = await DB.get('institutions', instId);
+        const ngo = await DB.get('ngos', ngoId);
+
+        const newPartnership = {
+          id: 'part_' + Math.random().toString(36).substr(2, 9),
+          institution_id: instId,
+          institution_name: inst ? inst.name : 'Institutional Kitchen',
+          ngo_id: ngoId,
+          ngo_name: ngo ? ngo.name : 'NGO / Trust',
+          status: 'PENDING',
+          requested_by: requestedBy,
+          created_at: new Date().toISOString()
+        };
+
+        await DB.put('partnerships', newPartnership);
+
+        // Alert target entity
+        if (requestedBy === 'NGO') {
+          await Notifications.send(instId, 'INSTITUTION', 'New Partnership Request', `${ngo ? ngo.name : 'An NGO'} has requested to become an approved Connection Partner to access your food surplus.`);
+        } else {
+          await Notifications.send(ngoId, 'NGO', 'Partnership Invitation', `${inst ? inst.name : 'An Institution'} invited your NGO to connect for surplus food distribution.`);
+        }
+
+        await Logger.log(Store.currentUser.id, Store.currentUser.role, 'REQUEST_PARTNERSHIP', 'partnerships', newPartnership.id, { instId, ngoId, requestedBy });
+        UI.showToast('Partnership request sent successfully!');
+      },
+
+      async acceptConnection(partnershipId) {
+        const part = await DB.get('partnerships', partnershipId);
+        if (!part) return;
+
+        part.status = 'ACCEPTED';
+        part.accepted_at = new Date().toISOString();
+        await DB.put('partnerships', part);
+
+        // Notify other party
+        const notifyTarget = part.requested_by === 'NGO' ? part.ngo_id : part.institution_id;
+        const targetRole = part.requested_by === 'NGO' ? 'NGO' : 'INSTITUTION';
+        await Notifications.send(notifyTarget, targetRole, 'Partnership Connected!', `Your partnership with ${part.institution_name} is now ACTIVE. You can now access and request surplus food.`);
+
+        await Logger.log(Store.currentUser.id, Store.currentUser.role, 'ACCEPT_PARTNERSHIP', 'partnerships', part.id, 'Connection accepted');
+        UI.showToast(`Partnership with ${part.ngo_name || part.institution_name} is now ACTIVE!`);
+      },
+
+      async rejectConnection(partnershipId) {
+        const part = await DB.get('partnerships', partnershipId);
+        if (!part) return;
+
+        part.status = 'REJECTED';
+        part.rejected_at = new Date().toISOString();
+        await DB.put('partnerships', part);
+
+        await Logger.log(Store.currentUser.id, Store.currentUser.role, 'REJECT_PARTNERSHIP', 'partnerships', part.id, 'Connection rejected');
+        UI.showToast('Partnership request rejected.', 'info');
+      }
+    };
+
+    const AIPredictor = {
+      async generatePrediction(mealType, expectedAttendees) {
+        const records = await DB.getAll('food_records');
+        const filtered = records.filter(r => r.meal_type === mealType || !mealType);
+        
+        let baselineRatio = 0.82;
+        if (filtered.length >= 2) {
+          const totalPrepared = filtered.reduce((s, r) => s + (Number(r.quantity_prepared) || 0), 0);
+          const totalConsumed = filtered.reduce((s, r) => s + (Number(r.quantity_consumed) || 0), 0);
+          if (totalPrepared > 0) baselineRatio = totalConsumed / totalPrepared;
+        }
+
+        const day = new Date().getDay();
+        let varianceModifier = (day === 0 || day === 6) ? 0.95 : 1.02;
+        
+        const expectedConsumption = Math.round(expectedAttendees * baselineRatio);
+        const recommendedPrep = Math.round(expectedAttendees * (baselineRatio * 1.05 * varianceModifier));
+        const expectedSurplus = Math.max(0, recommendedPrep - expectedConsumption);
+        
+        let wasteRisk = 'LOW';
+        if (expectedSurplus > (recommendedPrep * 0.15)) wasteRisk = 'HIGH';
+        else if (expectedSurplus > (recommendedPrep * 0.08)) wasteRisk = 'MODERATE';
+
+        const confidence = Math.min(96, Math.max(74, 75 + (filtered.length * 2)));
+
+        return {
+          meal_type: mealType,
+          expected_attendees: expectedAttendees,
+          recommended_prep: recommendedPrep,
+          expected_consumption: expectedConsumption,
+          expected_surplus: expectedSurplus,
+          waste_risk: wasteRisk,
+          confidence_pct: confidence,
+          algorithm_version: 'FOODLOOP-Heuristic-Ensemble-v2.0',
+          disclaimer: 'Statistical estimate based on kitchen historical records. Final preparation quantity remains subject to institutional kitchen manager discretion.'
+        };
+      }
+    };
+
+    const Auth = {
+      openModal(mode = 'login', role = 'INSTITUTION') {
+        const content = document.getElementById('auth-modal-content');
+        if (mode === 'login') {
+          content.innerHTML = `
+            <div class="text-center mb-6">
+              <h2 class="text-2xl font-bold text-slate-800">Sign in to FOODLOOP AI</h2>
+              <p class="text-sm text-slate-500 mt-1">Institutional Kitchen &amp; Surplus Logistics Portal</p>
+            </div>
+            <form onsubmit="Auth.handleLogin(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address</label>
+                <input id="login-email" type="email" required placeholder="manager@institution.org" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+                <input id="login-password" type="password" required placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm">
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition shadow-md shadow-brand-600/20 text-sm">Sign In</button>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-slate-500">
+              Don't have an account? 
+              <button onclick="Auth.openModal('register', 'INSTITUTION')" class="text-brand-600 font-semibold hover:underline">Register Institution</button> or 
+              <button onclick="Auth.openModal('register', 'NGO')" class="text-brand-600 font-semibold hover:underline">Register NGO</button>
+            </div>
+          `;
+        } else if (mode === 'register') {
+          const isInst = role === 'INSTITUTION';
+          content.innerHTML = `
+            <div class="text-center mb-5">
+              <h2 class="text-2xl font-bold text-slate-800">Register ${isInst ? 'Institutional Kitchen' : 'NGO / Trust'}</h2>
+              <p class="text-xs text-slate-500 mt-1">Join the smart food reduction and redistribution ecosystem</p>
+            </div>
+            <div class="flex rounded-xl bg-slate-100 p-1 mb-4">
+              <button type="button" onclick="Auth.openModal('register', 'INSTITUTION')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition ${isInst ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}">Institution / Canteen</button>
+              <button type="button" onclick="Auth.openModal('register', 'NGO')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition ${!isInst ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}">NGO / Relief Trust</button>
+            </div>
+            <form onsubmit="Auth.handleRegister(event, '${role}')" class="space-y-3 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">${isInst ? 'Institution / University Name' : 'NGO / Relief Trust Name'} *</label>
+                <input id="reg-name" required type="text" placeholder="${isInst ? 'Grand Tech University Canteen' : 'City Food Relief Trust'}" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address *</label>
+                  <input id="reg-email" required type="email" placeholder="contact@org.edu" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone Number *</label>
+                  <input id="reg-phone" required type="tel" placeholder="+91 98765 43210" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Physical Address *</label>
+                <input id="reg-address" required type="text" placeholder="Central Campus, Sector 4, Chennai" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">City / Region *</label>
+                  <input id="reg-location" required type="text" placeholder="Chennai, TN" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Contact Person Name *</label>
+                  <input id="reg-contact" required type="text" placeholder="Dr. S. Raman" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+              </div>
+              ${isInst ? `
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Kitchen / Facility Type *</label>
+                  <select id="reg-type" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white">
+                    <option value="University Canteen">University Canteen</option>
+                    <option value="Corporate Cafeteria">Corporate Cafeteria</option>
+                    <option value="Hospital Food Service">Hospital Food Service</option>
+                    <option value="Hotel / Banquet Kitchen">Hotel / Banquet Kitchen</option>
+                  </select>
+                </div>
+              ` : `
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Govt Registration / NGO Darpan ID *</label>
+                  <input id="reg-verification" required type="text" placeholder="DARPAN-TN-2024-XXXX" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+                </div>
+              `}
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Create Password *</label>
+                <input id="reg-password" required type="password" minlength="6" placeholder="At least 6 characters" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm">
+              </div>
+              <button type="submit" class="w-full py-2.5 mt-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition shadow-md shadow-brand-600/20 text-sm">Complete Registration</button>
+            </form>
+            <div class="mt-4 text-center text-xs text-slate-500">
+              Already have an account? <button onclick="Auth.openModal('login')" class="text-brand-600 font-semibold hover:underline">Log in</button>
+            </div>
+          `;
+        }
+
+        const modal = document.getElementById('auth-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      },
+
+      closeModal() {
+        const modal = document.getElementById('auth-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      },
+
+      async handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        const pass = document.getElementById('login-password').value.trim();
+        const hash = await CryptoUtil.hash(pass);
+        
+        const users = await DB.getAll('users');
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        
+        if (!user || user.password_hash !== hash) {
+          UI.showToast('Invalid email credentials or password', 'error');
+          return;
+        }
+
+        if (user.status === 'SUSPENDED') {
+          UI.showToast('Account is suspended. Contact system administrator.', 'error');
+          return;
+        }
+
+        Store.setSession(user);
+        await Logger.log(user.id, user.role, 'LOGIN', 'users', user.id, 'User authenticated successfully');
+        Auth.closeModal();
+        UI.showToast(`Welcome back, ${user.name}!`);
+        App.navigate(user.role.toLowerCase());
+      },
+
+      async handleRegister(e, role) {
+        e.preventDefault();
+        const name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const phone = document.getElementById('reg-phone').value.trim();
+        const address = document.getElementById('reg-address').value.trim();
+        const location = document.getElementById('reg-location').value.trim();
+        const contact = document.getElementById('reg-contact').value.trim();
+        const pass = document.getElementById('reg-password').value.trim();
+
+        const users = await DB.getAll('users');
+        if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+          UI.showToast('An account with this email already exists', 'error');
+          return;
+        }
+
+        const passHash = await CryptoUtil.hash(pass);
+        const userId = 'usr_' + Math.random().toString(36).substr(2, 8);
+        const orgId = (role === 'INSTITUTION' ? 'inst_' : 'ngo_') + Math.random().toString(36).substr(2, 8);
+
+        const mockLat = 13.0827 + (Math.random() - 0.5) * 0.1;
+        const mockLng = 80.2707 + (Math.random() - 0.5) * 0.1;
+
+        const user = {
+          id: userId,
+          org_id: orgId,
+          email,
+          password_hash: passHash,
+          name,
+          role,
+          phone,
+          status: 'ACTIVE',
+          created_at: new Date().toISOString()
+        };
+
+        await DB.put('users', user);
+
+        if (role === 'INSTITUTION') {
+          const instType = document.getElementById('reg-type').value;
+          await DB.put('institutions', {
+            id: orgId,
+            user_id: userId,
+            name,
+            email,
+            phone,
+            address,
+            location,
+            institution_type: instType,
+            contact_person: contact,
+            lat: mockLat,
+            lng: mockLng,
+            created_at: new Date().toISOString()
+          });
+        } else {
+          const verificationInfo = document.getElementById('reg-verification').value;
+          await DB.put('ngos', {
+            id: orgId,
+            user_id: userId,
+            name,
+            email,
+            phone,
+            address,
+            location,
+            verification_info: verificationInfo,
+            contact_person: contact,
+            is_verified: true,
+            lat: mockLat,
+            lng: mockLng,
+            created_at: new Date().toISOString()
+          });
+        }
+
+        await Logger.log(userId, role, 'REGISTER', 'users', userId, `Registered as ${role}`);
+        Store.setSession(user);
+        Auth.closeModal();
+        UI.showToast(`Registration complete! Welcome, ${name}`);
+        App.navigate(role.toLowerCase());
+      },
+
+      logout() {
+        if (Store.currentUser) {
+          Logger.log(Store.currentUser.id, Store.currentUser.role, 'LOGOUT', 'users', Store.currentUser.id, 'User logged out');
+        }
+        Store.setSession(null);
+        UI.showToast('Logged out successfully');
+        App.navigate('landing');
+      }
+    };
+
+    const InstitutionService = {
+      async getCurrentInstitution() {
+        if (!Store.currentUser) return null;
+        const list = await DB.getAll('institutions');
+        return list.find(i => i.user_id === Store.currentUser.id || i.id === Store.currentUser.org_id) || null;
+      },
+
+      async getStats(instId) {
+        const foodRecords = await DB.getAll('food_records');
+        const surplusRecords = await DB.getAll('surplus_food');
+        const requests = await DB.getAll('food_requests');
+        const deliveries = await DB.getAll('deliveries');
+        const partnerships = await DB.getAll('partnerships');
+
+        const instFood = foodRecords.filter(r => r.institution_id === instId);
+        const instSurplus = surplusRecords.filter(s => s.institution_id === instId);
+        const instRequests = requests.filter(r => r.institution_id === instId);
+        const instDeliveries = deliveries.filter(d => d.institution_id === instId);
+        const instPartners = partnerships.filter(p => p.institution_id === instId && p.status === 'ACCEPTED');
+
+        const prepared = instFood.reduce((sum, r) => sum + (Number(r.quantity_prepared) || 0), 0);
+        const consumed = instFood.reduce((sum, r) => sum + (Number(r.quantity_consumed) || 0), 0);
+        const rawSurplus = instFood.reduce((sum, r) => sum + (Number(r.surplus_quantity) || 0), 0);
+        
+        const redistributed = instDeliveries
+          .filter(d => d.status === 'COMPLETED' || d.status === 'RECEIVED')
+          .reduce((sum, d) => sum + (Number(d.quantity) || 0), 0);
+        
+        const waste = Math.max(0, rawSurplus - redistributed);
+        const activeRequests = instRequests.filter(r => r.status === 'PENDING').length;
+
+        return {
+          prepared,
+          consumed,
+          surplus: rawSurplus,
+          redistributed,
+          waste,
+          activeRequests,
+          connectedPartners: instPartners.length,
+          instFood,
+          instSurplus,
+          instRequests,
+          instDeliveries
+        };
+      },
+
+      openAddFoodModal() {
+        const today = new Date().toISOString().split('T')[0];
+        const defaultDeadline = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString().slice(0, 16);
+
+        const html = `
+          <form onsubmit="InstitutionService.handleSaveFoodRecord(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Production Date *</label>
+                <input id="food-date" type="date" required value="${today}" class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Meal Service *</label>
+                <select id="food-meal-type" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                  <option value="Lunch">Lunch Service</option>
+                  <option value="Dinner">Dinner Service</option>
+                  <option value="Breakfast">Breakfast</option>
+                  <option value="Snacks/Evening">Snacks / Refreshment</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Category *</label>
+                <select id="food-category" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                  <option value="Cooked Meals (Rice/Curry)">Cooked Meals (Rice/Curry)</option>
+                  <option value="Baked Goods / Breads">Baked Goods / Breads</option>
+                  <option value="Protein / Dairy Foods">Protein / Dairy Foods</option>
+                  <option value="Fresh Produce / Fruit">Fresh Produce / Fruit</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Food Item Description *</label>
+              <input id="food-name" type="text" required placeholder="Steamed Basmati Rice & Mixed Dal Curry" class="w-full px-3 py-2 border rounded-xl text-sm">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Prepared (Meals) *</label>
+                <input id="food-prep" type="number" min="1" required value="1000" oninput="InstitutionService.recalcCalculations()" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Expected People *</label>
+                <input id="food-expected" type="number" min="1" required value="950" oninput="InstitutionService.recalcCalculations()" class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Consumed (Meals) *</label>
+                <input id="food-consumed" type="number" min="0" required value="800" oninput="InstitutionService.recalcCalculations()" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold text-emerald-600">
+              </div>
+            </div>
+
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+              <div>
+                <span class="text-slate-500 block">Surplus Available</span>
+                <span id="calc-surplus" class="text-base font-bold text-brand-600">200 meals</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Consumption Rate</span>
+                <span id="calc-cons-rate" class="text-base font-bold text-slate-700">80.0%</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Surplus %</span>
+                <span id="calc-surp-rate" class="text-base font-bold text-amber-600">20.0%</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Waste Quantity</span>
+                <span id="calc-waste" class="text-base font-bold text-rose-600">0 meals</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Preparation Time</label>
+                <input id="food-preptime" type="datetime-local" class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Storage Condition</label>
+                <select id="food-storage" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                  <option value="Hot Hold (>60°C)">Hot Hold (&gt;60&deg;C)</option>
+                  <option value="Cold Refrigerated (<4°C)">Cold Refrigerated (&lt;4&deg;C)</option>
+                  <option value="Ambient Room Temp">Ambient Room Temp</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Safety Consumption Deadline *</label>
+                <input id="food-deadline" type="datetime-local" required value="${defaultDeadline}" class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Distribution Notes</label>
+                <input id="food-notes" type="text" placeholder="Freshly cooked, packed in sealed steel containers" class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+            </div>
+
+            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center space-x-2">
+              <input id="food-publish-surplus" type="checkbox" checked class="w-4 h-4 text-brand-600 rounded">
+              <label for="food-publish-surplus" class="text-xs font-medium text-emerald-900">
+                Publish surplus to <b>Approved Connection Partner NGOs</b> automatically
+              </label>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-3 border-t">
+              <button type="button" onclick="UI.closeActionModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-sm">Cancel</button>
+              <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm shadow">Save Production &amp; Publish</button>
+            </div>
+          </form>
+        `;
+        UI.openActionModal('New Food Production Entry', html, 'max-w-3xl');
+        InstitutionService.recalcCalculations();
+      },
+
+      recalcCalculations() {
+        const prep = Number(document.getElementById('food-prep')?.value) || 0;
+        const cons = Number(document.getElementById('food-consumed')?.value) || 0;
+        const surplus = Math.max(0, prep - cons);
+        const consPct = prep > 0 ? ((cons / prep) * 100).toFixed(1) : 0;
+        const surpPct = prep > 0 ? ((surplus / prep) * 100).toFixed(1) : 0;
+
+        const sEl = document.getElementById('calc-surplus');
+        const cEl = document.getElementById('calc-cons-rate');
+        const spEl = document.getElementById('calc-surp-rate');
+        if (sEl) sEl.textContent = `${surplus} meals`;
+        if (cEl) cEl.textContent = `${consPct}%`;
+        if (spEl) spEl.textContent = `${surpPct}%`;
+      },
+
+      async handleSaveFoodRecord(e) {
+        e.preventDefault();
+        const inst = await InstitutionService.getCurrentInstitution();
+        if (!inst) {
+          UI.showToast('Institution record not resolved', 'error');
+          return;
+        }
+
+        const date = document.getElementById('food-date').value;
+        const mealType = document.getElementById('food-meal-type').value;
+        const category = document.getElementById('food-category').value;
+        const name = document.getElementById('food-name').value.trim();
+        const prep = Number(document.getElementById('food-prep').value);
+        const expected = Number(document.getElementById('food-expected').value);
+        const cons = Number(document.getElementById('food-consumed').value);
+        const prepTime = document.getElementById('food-preptime').value || new Date().toISOString();
+        const storage = document.getElementById('food-storage').value;
+        const deadline = document.getElementById('food-deadline').value;
+        const notes = document.getElementById('food-notes').value.trim();
+        const publishSurplus = document.getElementById('food-publish-surplus').checked;
+
+        const surplus = Math.max(0, prep - cons);
+        const foodRecordId = 'rec_' + Math.random().toString(36).substr(2, 8);
+
+        const record = {
+          id: foodRecordId,
+          institution_id: inst.id,
+          date,
+          meal_type: mealType,
+          category,
+          food_name: name,
+          quantity_prepared: prep,
+          expected_people: expected,
+          quantity_consumed: cons,
+          surplus_quantity: surplus,
+          waste_quantity: 0,
+          preparation_time: prepTime,
+          storage_condition: storage,
+          deadline,
+          notes,
+          created_at: new Date().toISOString()
+        };
+
+        await DB.put('food_records', record);
+
+        // Safety record
+        await DB.put('food_safety_records', {
+          id: 'safe_' + foodRecordId,
+          food_record_id: foodRecordId,
+          institution_id: inst.id,
+          food_name: name,
+          preparation_time: prepTime,
+          storage_condition: storage,
+          deadline,
+          status: 'SAFE_WITHIN_WINDOW',
+          safety_notes: notes || 'Standard institutional compliance'
+        });
+
+        // Surplus publication
+        if (publishSurplus && surplus > 0) {
+          await DB.put('surplus_food', {
+            id: 'surp_' + foodRecordId,
+            food_record_id: foodRecordId,
+            institution_id: inst.id,
+            institution_name: inst.name,
+            food_name: name,
+            total_quantity: surplus,
+            available_quantity: surplus,
+            reserved_quantity: 0,
+            location: inst.location,
+            lat: inst.lat,
+            lng: inst.lng,
+            preparation_time: prepTime,
+            deadline: deadline,
+            storage_condition: storage,
+            status: 'AVAILABLE',
+            created_at: new Date().toISOString()
+          });
+
+          // In-app alert to connected partner NGOs
+          await Notifications.send('', 'NGO', 'Surplus Food Published', `${surplus} meals of "${name}" published by ${inst.name}.`);
+        }
+
+        await Logger.log(Store.currentUser.id, 'INSTITUTION', 'ADD_FOOD_RECORD', 'food_records', foodRecordId, { name, prep, cons, surplus });
+
+        UI.closeActionModal();
+        UI.showToast(`Food record saved! ${surplus > 0 ? surplus + ' meals published to partner loop.' : ''}`);
+        App.renderInstitutionView();
+      },
+
+      async approveAndAllocateFood(requestId) {
+        const req = await DB.get('food_requests', requestId);
+        if (!req) return;
+        const surplus = await DB.get('surplus_food', req.surplus_id);
+        if (!surplus) {
+          UI.showToast('Referenced surplus item is no longer available', 'error');
+          return;
+        }
+
+        // Capacity and overbooking validation
+        if (surplus.available_quantity < req.requested_quantity) {
+          UI.showToast(`Insufficient quantity. Only ${surplus.available_quantity} meals remain available.`, 'error');
+          return;
+        }
+
+        // Deduct inventory
+        surplus.available_quantity -= req.requested_quantity;
+        surplus.reserved_quantity += req.requested_quantity;
+        if (surplus.available_quantity === 0) surplus.status = 'REQUESTED';
+        await DB.put('surplus_food', surplus);
+
+        // Update Request state
+        req.status = 'APPROVED';
+        req.approved_at = new Date().toISOString();
+        await DB.put('food_requests', req);
+
+        // Initiate Delivery Logistics Pipeline
+        const deliveryId = 'del_' + Math.random().toString(36).substr(2, 8);
+        const deliv = {
+          id: deliveryId,
+          request_id: req.id,
+          surplus_id: surplus.id,
+          institution_id: req.institution_id,
+          institution_name: surplus.institution_name,
+          ngo_id: req.ngo_id,
+          ngo_name: req.ngo_name,
+          food_name: req.food_name,
+          quantity: req.requested_quantity,
+          pickup_location: surplus.location,
+          destination: req.destination || req.ngo_name + ' Center',
+          pickup_time: req.requested_pickup_time || 'Immediate Dispatch',
+          status: 'APPROVED',
+          created_at: new Date().toISOString()
+        };
+        await DB.put('deliveries', deliv);
+
+        // Notify Connected NGO
+        await Notifications.send(req.user_id, 'NGO', 'Food Request Allocated!', `Your request for ${req.requested_quantity} meals of ${req.food_name} is approved and allocated.`);
+        await Logger.log(Store.currentUser.id, 'INSTITUTION', 'APPROVE_ALLOCATE_FOOD', 'food_requests', req.id, { quantity: req.requested_quantity, deliveryId });
+
+        UI.showToast(`Food allocated! ${req.requested_quantity} meals reserved for ${req.ngo_name}.`);
+        App.renderInstitutionView();
+      },
+
+      async rejectRequest(requestId) {
+        const req = await DB.get('food_requests', requestId);
+        if (!req) return;
+        req.status = 'REJECTED';
+        await DB.put('food_requests', req);
+        await Notifications.send(req.user_id, 'NGO', 'Food Request Rejected', `Institution could not allocate ${req.food_name}.`);
+        UI.showToast('Request rejected.');
+        App.renderInstitutionView();
+      },
+
+      async updateDeliveryStatus(deliveryId, nextStatus) {
+        const deliv = await DB.get('deliveries', deliveryId);
+        if (!deliv) return;
+        deliv.status = nextStatus;
+        deliv.updated_at = new Date().toISOString();
+        if (nextStatus === 'PICKED_UP') deliv.actual_pickup_time = new Date().toISOString();
+        if (nextStatus === 'DELIVERED') deliv.actual_delivery_time = new Date().toISOString();
+
+        await DB.put('deliveries', deliv);
+        await Notifications.send('', 'NGO', 'Delivery Update', `Food package "${deliv.food_name}" updated to: ${nextStatus.replace(/_/g, ' ')}`);
+        await Logger.log(Store.currentUser.id, Store.currentUser.role, 'UPDATE_DELIVERY_STATUS', 'deliveries', deliveryId, nextStatus);
+        UI.showToast(`Delivery status updated to ${nextStatus.replace(/_/g, ' ')}`);
+        App.renderInstitutionView();
+      }
+    };
+
+    const NGOService = {
+      async getCurrentNGO() {
+        if (!Store.currentUser) return null;
+        const list = await DB.getAll('ngos');
+        return list.find(n => n.user_id === Store.currentUser.id || n.id === Store.currentUser.org_id) || null;
+      },
+
+      async openRequestModal(surplusId) {
+        const surplus = await DB.get('surplus_food', surplusId);
+        const ngo = await NGOService.getCurrentNGO();
+        if (!surplus || !ngo) return;
+
+        // Partner connection check
+        const isPartner = await PartnershipService.isConnected(surplus.institution_id, ngo.id);
+        if (!isPartner) {
+          UI.showToast('Connection Partner relationship required before requesting food.', 'warning');
+          return;
+        }
+
+        const now = new Date();
+        if (now > new Date(surplus.deadline)) {
+          UI.showToast('This surplus item has passed its configured food-safety deadline.', 'error');
+          return;
+        }
+
+        const html = `
+          <form onsubmit="NGOService.handleCreateRequest(event, '${surplus.id}')" class="space-y-4">
+            <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs space-y-1">
+              <div class="font-bold text-emerald-900 text-sm">${surplus.food_name}</div>
+              <div class="text-emerald-700">Institution: <span class="font-medium">${surplus.institution_name}</span> &bull; Available: <span class="font-bold">${surplus.available_quantity} meals</span></div>
+              <div class="text-emerald-600">Location: ${surplus.location} &bull; Deadline: ${UI.formatDate(surplus.deadline)}</div>
+              <div class="text-brand-700 font-semibold text-[11px]">&check; Verified Connection Partner</div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Requested Quantity (Meals) *</label>
+                <input id="req-qty" type="number" min="1" max="${surplus.available_quantity}" value="${Math.min(100, surplus.available_quantity)}" required class="w-full px-3 py-2 border rounded-xl text-sm font-semibold">
+                <span class="text-[11px] text-slate-400">Max available: ${surplus.available_quantity} meals</span>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Beneficiaries to Serve *</label>
+                <input id="req-people" type="number" min="1" value="${Math.min(100, surplus.available_quantity)}" required class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Logistics Mode *</label>
+                <select id="req-logistics" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                  <option value="NGO Volunteer Pickup">NGO Volunteer Pickup</option>
+                  <option value="Third-Party Partner Vehicle">Third-Party Partner Vehicle</option>
+                  <option value="Kitchen Delivery Drop">Kitchen Delivery Drop</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Estimated Pickup Time *</label>
+                <input id="req-pickuptime" type="time" required value="14:30" class="w-full px-3 py-2 border rounded-xl text-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Delivery Destination *</label>
+              <input id="req-dest" type="text" required value="${ngo.address}" class="w-full px-3 py-2 border rounded-xl text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Distribution Notes</label>
+              <input id="req-notes" type="text" placeholder="Community kitchen dinner service" class="w-full px-3 py-2 border rounded-xl text-sm">
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-3 border-t">
+              <button type="button" onclick="UI.closeActionModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-sm">Cancel</button>
+              <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow">Submit Food Request</button>
+            </div>
+          </form>
+        `;
+        UI.openActionModal('Request Surplus Food Allocation', html, 'max-w-xl');
+      },
+
+      async handleCreateRequest(e, surplusId) {
+        e.preventDefault();
+        const ngo = await NGOService.getCurrentNGO();
+        const surplus = await DB.get('surplus_food', surplusId);
+        if (!ngo || !surplus) return;
+
+        const qty = Number(document.getElementById('req-qty').value);
+        const people = Number(document.getElementById('req-people').value);
+        const logistics = document.getElementById('req-logistics').value;
+        const pickupTime = document.getElementById('req-pickuptime').value;
+        const destination = document.getElementById('req-dest').value;
+        const notes = document.getElementById('req-notes').value;
+
+        if (qty > surplus.available_quantity) {
+          UI.showToast(`Requested quantity exceeds available ${surplus.available_quantity} meals.`, 'error');
+          return;
+        }
+
+        const reqId = 'req_' + Math.random().toString(36).substr(2, 8);
+        const newReq = {
+          id: reqId,
+          surplus_id: surplus.id,
+          food_name: surplus.food_name,
+          institution_id: surplus.institution_id,
+          institution_name: surplus.institution_name,
+          ngo_id: ngo.id,
+          ngo_name: ngo.name,
+          user_id: Store.currentUser.id,
+          requested_quantity: qty,
+          people_to_serve: people,
+          logistics_preference: logistics,
+          requested_pickup_time: pickupTime,
+          destination,
+          notes,
+          status: 'PENDING',
+          created_at: new Date().toISOString()
+        };
+
+        await DB.put('food_requests', newReq);
+
+        await Notifications.send(surplus.institution_id, 'INSTITUTION', 'New Food Request Received', `${ngo.name} requested ${qty} meals of ${surplus.food_name}.`);
+        await Logger.log(Store.currentUser.id, 'NGO', 'CREATE_FOOD_REQUEST', 'food_requests', reqId, { qty, surplusId });
+
+        UI.closeActionModal();
+        UI.showToast(`Request for ${qty} meals submitted successfully!`);
+        App.renderNGOView();
+      },
+
+      async confirmReceived(deliveryId) {
+        const deliv = await DB.get('deliveries', deliveryId);
+        if (!deliv) return;
+
+        deliv.status = 'COMPLETED';
+        deliv.actual_delivery_time = new Date().toISOString();
+        deliv.receiver_confirmed = true;
+        deliv.confirmed_at = new Date().toISOString();
+        await DB.put('deliveries', deliv);
+
+        const surplus = await DB.get('surplus_food', deliv.surplus_id);
+        if (surplus && surplus.available_quantity <= 0) {
+          surplus.status = 'RECEIVED';
+          await DB.put('surplus_food', surplus);
+        }
+
+        // Record impact
+        await DB.put('impact_records', {
+          id: 'imp_' + deliv.id,
+          delivery_id: deliv.id,
+          institution_id: deliv.institution_id,
+          ngo_id: deliv.ngo_id,
+          food_name: deliv.food_name,
+          meals_redistributed: deliv.quantity,
+          co2_prevented_kg: parseFloat((deliv.quantity * 0.42).toFixed(1)),
+          timestamp: new Date().toISOString()
+        });
+
+        await Notifications.send(deliv.institution_id, 'INSTITUTION', 'Delivery Confirmed Received', `${deliv.ngo_name} confirmed receipt of ${deliv.quantity} meals of ${deliv.food_name}.`);
+        await Logger.log(Store.currentUser.id, 'NGO', 'CONFIRM_DELIVERY_RECEIVED', 'deliveries', deliveryId, { redistributed: deliv.quantity });
+
+        UI.showToast(`Receipt confirmed! ${deliv.quantity} meals recorded into impact analytics.`);
+        App.renderNGOView();
+      }
+    };
+
+    const AdminService = {
+      async verifyNGO(ngoId, approve = true) {
+        const ngo = await DB.get('ngos', ngoId);
+        if (!ngo) return;
+        ngo.is_verified = approve;
+        await DB.put('ngos', ngo);
+        await Logger.log(Store.currentUser.id, 'ADMIN', approve ? 'VERIFY_NGO' : 'UNVERIFY_NGO', 'ngos', ngoId, { approve });
+        UI.showToast(`NGO status updated: ${approve ? 'VERIFIED' : 'UNVERIFIED'}`);
+        App.renderAdminView();
+      }
+    };
+
+    const ViewRenderer = {
+      renderLanding() {
+        return `
+          <div class="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-deep-950 text-white">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.15),transparent_50%)]"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 relative z-10">
+              <div class="text-center max-w-3xl mx-auto space-y-6">
+                <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>AI-Powered Smart Food Waste Ecosystem</span>
+                </div>
+                <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
+                  From Surplus to Support: <br/>
+                  <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">The Connected Food Network</span>
+                </h1>
+                <p class="text-lg sm:text-xl text-slate-300 font-light leading-relaxed">
+                  FOODLOOP AI connects institutional kitchens directly with verified NGO <b>Connection Partners</b> to prevent overproduction, govern food safety, and deliver surplus meals to communities.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                  <button onclick="Auth.openModal('register', 'INSTITUTION')" class="w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-bold text-base shadow-xl shadow-brand-600/25 transition">
+                    Get Started (Register)
+                  </button>
+                  <button onclick="Auth.openModal('login')" class="w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl font-semibold text-base transition">
+                    Live Portal Sign In
+                  </button>
+                </div>
+              </div>
+
+              <!-- Workflow Architecture Preview -->
+              <div class="mt-20 border border-slate-800 bg-slate-900/80 rounded-2xl p-6 sm:p-8 backdrop-blur shadow-2xl">
+                <div class="text-center mb-8">
+                  <h3 class="text-xs font-bold text-emerald-400 tracking-wider uppercase">Institutional-NGO Partnership Loop</h3>
+                  <p class="text-2xl font-bold text-slate-100 mt-1">Predict. Connect. Allocate. Track. Learn.</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 text-center text-xs">
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">1. PREPARE</span>
+                    <span class="text-slate-400">Kitchen tracks batch</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">2. SURPLUS</span>
+                    <span class="text-slate-400">Auto-calc surplus</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">3. PARTNER</span>
+                    <span class="text-slate-400">Establish Connection</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">4. MARKET</span>
+                    <span class="text-slate-400">Connected NGO views</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">5. REQUEST</span>
+                    <span class="text-slate-400">NGO requests meals</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">6. ALLOCATE</span>
+                    <span class="text-slate-400">Kitchen approves &amp; packs</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">7. DISPATCH</span>
+                    <span class="text-slate-400">Delivery pipeline</span>
+                  </div>
+                  <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                    <span class="block font-bold text-emerald-400 text-sm">8. CONFIRM</span>
+                    <span class="text-slate-400">NGO verifies receipt</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      async renderInstitutionView(stats, currentInst) {
+        return `
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+            <!-- Header bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h1 class="text-2xl font-bold text-deep-900">${currentInst ? currentInst.name : 'Kitchen Facility'}</h1>
+                  <span class="badge badge-success">Institutional Kitchen</span>
+                </div>
+                <p class="text-sm text-slate-500 mt-1">${currentInst ? currentInst.institution_type : 'Canteen'} &bull; ${currentInst ? currentInst.location : 'Campus'}</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="InstitutionService.openAddFoodModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-brand-600/20 flex items-center space-x-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  <span>New Food Production Entry</span>
+                </button>
+                <button onclick="App.openAIModal()" class="px-4 py-2.5 bg-deep-900 hover:bg-deep-800 text-white rounded-xl text-sm font-semibold flex items-center space-x-2">
+                  <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  <span>AI Demand Prediction</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- KPI Metric Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-semibold text-slate-500 uppercase block">Prepared</span>
+                <span class="text-2xl font-bold text-slate-900 mt-1 block">${stats.prepared}</span>
+                <span class="text-[11px] text-slate-400">Total meals logged</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-semibold text-slate-500 uppercase block">Consumed</span>
+                <span class="text-2xl font-bold text-emerald-600 mt-1 block">${stats.consumed}</span>
+                <span class="text-[11px] text-emerald-700">${stats.prepared ? ((stats.consumed/stats.prepared)*100).toFixed(1) : 0}% on-site</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-semibold text-slate-500 uppercase block">Surplus</span>
+                <span class="text-2xl font-bold text-amber-600 mt-1 block">${stats.surplus}</span>
+                <span class="text-[11px] text-amber-700">Calculated excess</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-semibold text-slate-500 uppercase block">Redistributed</span>
+                <span class="text-2xl font-bold text-teal-600 mt-1 block">${stats.redistributed}</span>
+                <span class="text-[11px] text-teal-700">Delivered to NGOs</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-semibold text-slate-500 uppercase block">Waste</span>
+                <span class="text-2xl font-bold text-rose-600 mt-1 block">${stats.waste}</span>
+                <span class="text-[11px] text-rose-700">Unallocated</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-brand-200 bg-brand-50/40 shadow-sm">
+                <span class="text-xs font-semibold text-brand-800 uppercase block">Partners</span>
+                <span class="text-2xl font-bold text-brand-700 mt-1 block">${stats.connectedPartners}</span>
+                <span class="text-[11px] text-brand-600">Active Connection NGOs</span>
+              </div>
+            </div>
+
+            <!-- Navigation Subtabs -->
+            <div class="border-b border-slate-200 flex flex-wrap gap-4 sm:gap-6">
+              <button onclick="App.setInstTab('records')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'records' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Production Records (${stats.instFood.length})</button>
+              <button onclick="App.setInstTab('partners')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'partners' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Connection Partners</button>
+              <button onclick="App.setInstTab('requests')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'requests' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">NGO Food Requests (${stats.instRequests.length})</button>
+              <button onclick="App.setInstTab('deliveries')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'deliveries' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Deliveries (${stats.instDeliveries.length})</button>
+              <button onclick="App.setInstTab('safety')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'safety' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Food Safety Tracking</button>
+              <button onclick="App.setInstTab('analytics')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'analytics' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Analytics</button>
+            </div>
+
+            <div id="inst-tab-view"></div>
+          </div>
+        `;
+      },
+
+      renderNGOMarketplace(surplusList, requests, deliveries, partnersCount) {
+        return `
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h1 class="text-2xl font-bold text-deep-900">NGO Surplus Food &amp; Partner Network</h1>
+                  <span class="badge badge-success">Verified Partner</span>
+                </div>
+                <p class="text-sm text-slate-500 mt-1">Connect with institutional kitchens and request fresh surplus food for distribution</p>
+              </div>
+              <div class="flex items-center space-x-3 text-xs">
+                <span class="px-3 py-1.5 bg-emerald-50 text-emerald-800 rounded-lg font-semibold border border-emerald-200">Active Partners: <b>${partnersCount}</b></span>
+                <span class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg font-medium">Pending Requests: <b>${requests.filter(r => r.status === 'PENDING').length}</b></span>
+              </div>
+            </div>
+
+            <!-- Navigation Subtabs -->
+            <div class="border-b border-slate-200 flex flex-wrap gap-4 sm:gap-6">
+              <button onclick="App.setNGOTab('available')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'available' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Available Surplus (${surplusList.length})</button>
+              <button onclick="App.setNGOTab('partners')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'partners' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Connection Partners</button>
+              <button onclick="App.setNGOTab('requests')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'requests' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">My Food Requests (${requests.length})</button>
+              <button onclick="App.setNGOTab('deliveries')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'deliveries' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">Deliveries &amp; Confirmations (${deliveries.length})</button>
+            </div>
+
+            <div id="ngo-tab-view"></div>
+          </div>
+        `;
+      }
+    };
+
+    const App = {
+      async init() {
+        await DB.init();
+        Store.initSession();
+
+        const users = await DB.getAll('users');
+        if (users.length === 0) {
+          await this.seedDatabase(false);
+        }
+
+        this.renderNavbar();
+        this.navigate(Store.currentUser ? Store.currentUser.role.toLowerCase() : 'landing');
+        Notifications.refreshCount();
+      },
+
+      renderNavbar() {
+        const c = document.getElementById('navbar-actions');
+        if (!Store.currentUser) {
+          c.innerHTML = `
+            <button onclick="Auth.openModal('login')" class="text-sm font-semibold text-slate-700 hover:text-brand-600 px-3 py-2 rounded-lg transition">Sign In</button>
+            <button onclick="Auth.openModal('register', 'INSTITUTION')" class="text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl shadow-sm transition">Join FOODLOOP</button>
+          `;
+        } else {
+          const u = Store.currentUser;
+          c.innerHTML = `
+            <div class="relative">
+              <button onclick="App.openNotificationsModal()" class="p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition relative">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                <span id="notif-badge" class="${Store.unreadNotificationsCount > 0 ? '' : 'hidden'} absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full text-xs flex items-center justify-center font-bold">${Store.unreadNotificationsCount}</span>
+              </button>
+            </div>
+            <div class="h-6 w-px bg-slate-200"></div>
+            <div class="flex items-center space-x-2">
+              <span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center border border-emerald-300">
+                ${u.name.charAt(0)}
+              </span>
+              <div class="hidden sm:block text-left">
+                <span class="text-xs font-bold text-slate-800 block leading-tight">${u.name}</span>
+                <span class="text-[10px] font-semibold text-brand-600 uppercase tracking-wider">${u.role}</span>
+              </div>
+            </div>
+            <button onclick="Auth.logout()" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg transition" title="Sign out">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
+          `;
+        }
+      },
+
+      async navigate(viewName) {
+        Store.currentView = viewName;
+        this.renderNavbar();
+        const root = document.getElementById('app-root');
+
+        if (viewName === 'landing') {
+          root.innerHTML = ViewRenderer.renderLanding();
+          return;
+        }
+
+        if (!Store.currentUser) {
+          Auth.openModal('login');
+          return;
+        }
+
+        if (viewName === 'institution') await this.renderInstitutionView();
+        else if (viewName === 'ngo') await this.renderNGOView();
+        else if (viewName === 'admin') await this.renderAdminView();
+      },
+
+      async renderInstitutionView() {
+        const inst = await InstitutionService.getCurrentInstitution();
+        const instId = inst ? inst.id : 'inst_demo';
+        const stats = await InstitutionService.getStats(instId);
+
+        const root = document.getElementById('app-root');
+        root.innerHTML = await ViewRenderer.renderInstitutionView(stats, inst);
+        this.setInstTab(Store.activeTab || 'records');
+      },
+
+      async setInstTab(tabName) {
+        Store.activeTab = tabName;
+        const container = document.getElementById('inst-tab-view');
+        if (!container) return;
+
+        const inst = await InstitutionService.getCurrentInstitution();
+        const instId = inst ? inst.id : 'inst_demo';
+        const stats = await InstitutionService.getStats(instId);
+
+        if (tabName === 'records') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex items-center space-x-2">
+                  <h3 class="text-base font-bold text-slate-800">Daily Kitchen Production Entries</h3>
+                  <span class="text-xs text-slate-500">(${stats.instFood.length} records)</span>
+                </div>
+                <input type="text" id="record-search" oninput="App.filterRecordsTable()" placeholder="Search food..." class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-48">
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs" id="records-table">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+                    <tr>
+                      <th class="p-3.5">Date / Service</th>
+                      <th class="p-3.5">Food Item</th>
+                      <th class="p-3.5">Prepared</th>
+                      <th class="p-3.5">Consumed</th>
+                      <th class="p-3.5">Surplus</th>
+                      <th class="p-3.5">Consumption Rate</th>
+                      <th class="p-3.5">Deadline</th>
+                      <th class="p-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${stats.instFood.length === 0 ? `
+                      <tr><td colspan="8" class="p-8 text-center text-slate-400">No production records found. Click "+ New Food Production Entry".</td></tr>
+                    ` : stats.instFood.map(r => {
+                      const consPct = r.quantity_prepared > 0 ? ((r.quantity_consumed / r.quantity_prepared) * 100).toFixed(1) : 0;
+                      const hasSurplus = r.surplus_quantity > 0;
+                      const isExpired = new Date() > new Date(r.deadline);
+                      return `
+                        <tr class="hover:bg-slate-50/80 transition">
+                          <td class="p-3.5 font-medium text-slate-800">${r.date} <br/><span class="text-slate-400">${r.meal_type}</span></td>
+                          <td class="p-3.5 font-bold text-slate-800">${r.food_name}</td>
+                          <td class="p-3.5 font-bold text-slate-800">${r.quantity_prepared}</td>
+                          <td class="p-3.5 text-emerald-600 font-semibold">${r.quantity_consumed}</td>
+                          <td class="p-3.5 font-bold ${hasSurplus ? 'text-amber-600' : 'text-slate-400'}">${r.surplus_quantity}</td>
+                          <td class="p-3.5">
+                            <div class="flex items-center space-x-2">
+                              <div class="w-16 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-brand-500 h-1.5 rounded-full" style="width: ${Math.min(100, consPct)}%"></div>
+                              </div>
+                              <span>${consPct}%</span>
+                            </div>
+                          </td>
+                          <td class="p-3.5">
+                            <span class="badge ${isExpired ? 'badge-danger' : 'badge-success'}">${isExpired ? 'EXPIRED' : 'SAFE'}</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">${UI.formatDate(r.deadline)}</div>
+                          </td>
+                          <td class="p-3.5 text-right space-x-2">
+                            <button onclick="App.deleteFoodRecord('${r.id}')" class="text-rose-500 hover:text-rose-700 font-medium text-[11px]">Delete</button>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'partners') {
+          // Connection Partners Tab for Institution
+          const allPartnerships = await DB.getAll('partnerships');
+          const allNGOs = await DB.getAll('ngos');
+          const instPartners = allPartnerships.filter(p => p.institution_id === instId);
+          const pendingRequests = instPartners.filter(p => p.status === 'PENDING' && p.requested_by === 'NGO');
+          const activePartners = instPartners.filter(p => p.status === 'ACCEPTED');
+
+          // NGOs not yet connected
+          const connectedNgoIds = instPartners.map(p => p.ngo_id);
+          const discoverableNGOs = allNGOs.filter(n => !connectedNgoIds.includes(n.id) && n.is_verified);
+
+          container.innerHTML = `
+            <div class="space-y-6">
+              <!-- Pending Requests Card -->
+              <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+                  <div>
+                    <h3 class="font-bold text-sm text-slate-800">Incoming Connection Requests from NGOs</h3>
+                    <p class="text-xs text-slate-500">Accepting an NGO allows them to see and request your surplus food.</p>
+                  </div>
+                  <span class="badge badge-warning">${pendingRequests.length} Pending</span>
+                </div>
+                <div class="divide-y divide-slate-100">
+                  ${pendingRequests.length === 0 ? `
+                    <div class="p-6 text-center text-slate-400 text-xs">No pending connection requests.</div>
+                  ` : pendingRequests.map(pr => `
+                    <div class="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <div class="flex items-center space-x-2">
+                          <span class="font-bold text-slate-900">${pr.ngo_name}</span>
+                          <span class="badge badge-success">Verified NGO</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Requested on: ${UI.formatDate(pr.created_at)}</p>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <button onclick="App.acceptPartnership('${pr.id}')" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                          Accept Connection
+                        </button>
+                        <button onclick="App.rejectPartnership('${pr.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-xs font-medium transition">
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Active Partners -->
+              <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <h3 class="font-bold text-sm text-slate-800">Active Connection Partners (${activePartners.length})</h3>
+                  <span class="text-xs text-brand-600 font-semibold">&check; Authorized to receive surplus allocations</span>
+                </div>
+                <div class="divide-y divide-slate-100">
+                  ${activePartners.length === 0 ? `
+                    <div class="p-6 text-center text-slate-400 text-xs">No active partners connected yet. Browse verified NGOs below to initiate an invitation.</div>
+                  ` : activePartners.map(ap => `
+                    <div class="p-4 flex justify-between items-center">
+                      <div>
+                        <span class="font-bold text-slate-800 block">${ap.ngo_name}</span>
+                        <span class="text-xs text-slate-400">Connected since: ${UI.formatDate(ap.accepted_at || ap.created_at)}</span>
+                      </div>
+                      <span class="badge badge-success">Active Partner</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Discover and Invite Verified NGOs -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <h4 class="font-bold text-sm text-slate-800">Browse &amp; Invite Verified NGOs</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  ${discoverableNGOs.length === 0 ? `
+                    <div class="col-span-3 text-xs text-slate-400">All available verified NGOs are already in your partnership pipeline.</div>
+                  ` : discoverableNGOs.map(ngo => `
+                    <div class="p-3 border rounded-xl flex flex-col justify-between space-y-2">
+                      <div>
+                        <span class="font-bold text-slate-800 text-xs block">${ngo.name}</span>
+                        <span class="text-[11px] text-slate-500">${ngo.location} &bull; ${ngo.contact_person}</span>
+                      </div>
+                      <button onclick="PartnershipService.requestConnection('${ngo.id}', '${instId}', 'INSTITUTION').then(() => App.setInstTab('partners'))" class="px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg text-xs font-semibold border border-brand-200 transition">
+                        + Invite to Connect
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'requests') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-slate-800">Surplus Food Allocation Requests</h3>
+                  <p class="text-xs text-slate-500">Approve and allocate surplus food specifically for connected partner NGOs</p>
+                </div>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b text-slate-600 uppercase font-semibold">
+                    <tr>
+                      <th class="p-3.5">Connected NGO</th>
+                      <th class="p-3.5">Food Requested</th>
+                      <th class="p-3.5">Quantity</th>
+                      <th class="p-3.5">Logistics / Time</th>
+                      <th class="p-3.5">Status</th>
+                      <th class="p-3.5 text-right">Allocation Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${stats.instRequests.length === 0 ? `
+                      <tr><td colspan="6" class="p-8 text-center text-slate-400">No requests from partner NGOs.</td></tr>
+                    ` : stats.instRequests.map(rq => {
+                      const isPending = rq.status === 'PENDING';
+                      return `
+                        <tr class="hover:bg-slate-50 transition">
+                          <td class="p-3.5 font-bold text-slate-800">${rq.ngo_name} <br/><span class="text-slate-400 font-normal">${UI.formatDate(rq.created_at)}</span></td>
+                          <td class="p-3.5 font-semibold text-slate-700">${rq.food_name}</td>
+                          <td class="p-3.5 font-bold text-brand-700">${rq.requested_quantity} meals</td>
+                          <td class="p-3.5">${rq.requested_pickup_time} <br/><span class="text-slate-400">${rq.logistics_preference}</span></td>
+                          <td class="p-3.5">
+                            <span class="badge ${rq.status === 'APPROVED' ? 'badge-success' : rq.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'}">${rq.status}</span>
+                          </td>
+                          <td class="p-3.5 text-right space-x-2">
+                            ${isPending ? `
+                              <button onclick="InstitutionService.approveAndAllocateFood('${rq.id}')" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg text-xs transition shadow-sm">
+                                APPROVE &amp; ALLOCATE
+                              </button>
+                              <button onclick="InstitutionService.rejectRequest('${rq.id}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-xs transition">
+                                REJECT
+                              </button>
+                            ` : `<span class="text-slate-400 text-[11px] font-medium">Processed</span>`}
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'deliveries') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-800">Redistribution Delivery Pipeline</h3>
+                <p class="text-xs text-slate-500">Stepwise dispatch tracking from packing to confirmed receipt</p>
+              </div>
+              <div class="divide-y divide-slate-100">
+                ${stats.instDeliveries.length === 0 ? `
+                  <div class="p-8 text-center text-slate-400 text-xs">No active deliveries recorded. Approve an NGO request to create a delivery tracking entry.</div>
+                ` : stats.instDeliveries.map(d => {
+                  const steps = ['APPROVED', 'PACKING', 'READY_FOR_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'COMPLETED'];
+                  const curIdx = steps.indexOf(d.status);
+                  return `
+                    <div class="p-5 space-y-3">
+                      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                          <span class="text-sm font-bold text-slate-900">${d.quantity} meals of "${d.food_name}" &rarr; ${d.ngo_name}</span>
+                          <span class="text-xs text-slate-400 block">Destination: ${d.destination} &bull; Target Time: ${d.pickup_time}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <span class="badge ${d.status === 'COMPLETED' ? 'badge-success' : 'badge-info'}">${d.status.replace(/_/g, ' ')}</span>
+                          ${d.status !== 'COMPLETED' ? `
+                            <select onchange="InstitutionService.updateDeliveryStatus('${d.id}', this.value)" class="text-xs font-semibold px-2 py-1 border rounded-lg bg-white">
+                              <option value="">Update Status &rarr;</option>
+                              <option value="PACKING">Mark PACKING</option>
+                              <option value="READY_FOR_PICKUP">Mark READY FOR PICKUP</option>
+                              <option value="PICKED_UP">Mark PICKED UP</option>
+                              <option value="IN_TRANSIT">Mark IN TRANSIT</option>
+                              <option value="DELIVERED">Mark DELIVERED</option>
+                            </select>
+                          ` : '<span class="text-xs font-semibold text-emerald-600">&check; Confirmed by NGO</span>'}
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-7 gap-1 pt-2">
+                        ${steps.map((st, i) => {
+                          const active = i <= curIdx;
+                          return `
+                            <div class="text-center">
+                              <div class="h-1.5 rounded-full ${active ? 'bg-brand-500' : 'bg-slate-200'} mb-1"></div>
+                              <span class="text-[9px] font-semibold ${active ? 'text-slate-800' : 'text-slate-400'} block uppercase">${st.replace(/_/g, ' ')}</span>
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'safety') {
+          const safetyRecords = await DB.getAll('food_safety_records');
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+              <div>
+                <h3 class="text-base font-bold text-slate-800">Food Safety &amp; Thermal Compliance Monitoring</h3>
+                <p class="text-xs text-slate-500">Configurable thermal safe-consumption windows. Automated auto-delisting when food passes deadline without claiming medical certification.</p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
+                  <span class="text-xs font-bold text-emerald-800 uppercase block">SAFE WITHIN WINDOW</span>
+                  <p class="text-xs text-emerald-700 mt-1">Available for active redistribution and partner requests.</p>
+                </div>
+                <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/50">
+                  <span class="text-xs font-bold text-amber-800 uppercase block">APPROACHING DEADLINE (&lt;60m)</span>
+                  <p class="text-xs text-amber-700 mt-1">Expedited local partner pickup required.</p>
+                </div>
+                <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/50">
+                  <span class="text-xs font-bold text-rose-800 uppercase block">PAST CONFIGURED WINDOW</span>
+                  <p class="text-xs text-rose-700 mt-1">Auto-delisted. Strictly prohibited from NGO distribution.</p>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto pt-2">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b text-slate-600 font-semibold uppercase">
+                    <tr>
+                      <th class="p-3">Food Item</th>
+                      <th class="p-3">Prep Timestamp</th>
+                      <th class="p-3">Storage Condition</th>
+                      <th class="p-3">Configured Deadline</th>
+                      <th class="p-3">Current Safety Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${safetyRecords.length === 0 ? `
+                      <tr><td colspan="5" class="p-6 text-center text-slate-400">No active food safety logs.</td></tr>
+                    ` : safetyRecords.map(s => {
+                      const now = new Date();
+                      const deadline = new Date(s.deadline);
+                      const diffMinutes = (deadline - now) / 60000;
+                      let badge = 'badge-success';
+                      let statusText = 'SAFE WITHIN WINDOW';
+                      if (diffMinutes < 0) {
+                        badge = 'badge-danger';
+                        statusText = 'PAST CONFIGURED WINDOW';
+                      } else if (diffMinutes < 60) {
+                        badge = 'badge-warning';
+                        statusText = 'APPROACHING DEADLINE';
+                      }
+                      return `
+                        <tr>
+                          <td class="p-3 font-bold text-slate-800">${s.food_name}</td>
+                          <td class="p-3 text-slate-500">${UI.formatDate(s.preparation_time)}</td>
+                          <td class="p-3 font-medium text-slate-700">${s.storage_condition}</td>
+                          <td class="p-3 text-slate-800 font-semibold">${UI.formatDate(s.deadline)}</td>
+                          <td class="p-3"><span class="badge ${badge}">${statusText}</span></td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'analytics') {
+          container.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h4 class="text-sm font-bold text-slate-800 mb-4">Production vs. Real Consumption (Meals)</h4>
+                <div class="h-64"><canvas id="inst-chart-prep"></canvas></div>
+              </div>
+              <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h4 class="text-sm font-bold text-slate-800 mb-4">Surplus Allocation (Redistributed vs Unclaimed Waste)</h4>
+                <div class="h-64"><canvas id="inst-chart-pie"></canvas></div>
+              </div>
+            </div>
+          `;
+          setTimeout(() => App.renderInstCharts(stats), 50);
+        }
+      },
+
+      filterRecordsTable() {
+        const val = document.getElementById('record-search').value.toLowerCase();
+        const rows = document.querySelectorAll('#records-table tbody tr');
+        rows.forEach(r => {
+          r.style.display = r.textContent.toLowerCase().includes(val) ? '' : 'none';
+        });
+      },
+
+      async deleteFoodRecord(id) {
+        if (!confirm('Delete this food entry? Surplus and safety records will also be removed.')) return;
+        await DB.delete('food_records', id);
+        await DB.delete('surplus_food', 'surp_' + id);
+        await DB.delete('food_safety_records', 'safe_' + id);
+        UI.showToast('Record deleted.');
+        App.renderInstitutionView();
+      },
+
+      async acceptPartnership(partId) {
+        await PartnershipService.acceptConnection(partId);
+        App.renderInstitutionView();
+      },
+
+      async rejectPartnership(partId) {
+        await PartnershipService.rejectConnection(partId);
+        App.renderInstitutionView();
+      },
+
+      renderInstCharts(stats) {
+        const ctxPrep = document.getElementById('inst-chart-prep');
+        const ctxPie = document.getElementById('inst-chart-pie');
+        if (!ctxPrep || !ctxPie) return;
+
+        new Chart(ctxPrep, {
+          type: 'bar',
+          data: {
+            labels: ['Total Prepared', 'Actual Consumed', 'Total Surplus'],
+            datasets: [{
+              label: 'Meals',
+              data: [stats.prepared, stats.consumed, stats.surplus],
+              backgroundColor: ['#0f172a', '#10b981', '#f59e0b'],
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+          }
+        });
+
+        new Chart(ctxPie, {
+          type: 'doughnut',
+          data: {
+            labels: ['Redistributed to NGOs', 'Waste'],
+            datasets: [{
+              data: [stats.redistributed, stats.waste],
+              backgroundColor: ['#059669', '#ef4444'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      },
+
+      async renderNGOView() {
+        const ngo = await NGOService.getCurrentNGO();
+        const ngoId = ngo ? ngo.id : 'ngo_demo';
+
+        const allSurplus = await DB.getAll('surplus_food');
+        const allRequests = await DB.getAll('food_requests');
+        const allDeliveries = await DB.getAll('deliveries');
+        const allPartnerships = await DB.getAll('partnerships');
+
+        // Only show surplus from ACCEPTED Connection Partner institutions
+        const activePartnerInstIds = allPartnerships
+          .filter(p => p.ngo_id === ngoId && p.status === 'ACCEPTED')
+          .map(p => p.institution_id);
+
+        const now = new Date();
+        const partnerSurplus = allSurplus.filter(s => {
+          return activePartnerInstIds.includes(s.institution_id) && 
+                 s.available_quantity > 0 && 
+                 new Date(s.deadline) > now && 
+                 s.status === 'AVAILABLE';
+        });
+
+        const ngoRequests = allRequests.filter(r => r.ngo_id === ngoId);
+        const ngoDeliveries = allDeliveries.filter(d => d.ngo_id === ngoId);
+
+        const root = document.getElementById('app-root');
+        root.innerHTML = ViewRenderer.renderNGOMarketplace(partnerSurplus, ngoRequests, ngoDeliveries, activePartnerInstIds.length);
+        this.setNGOTab(Store.activeTab || 'available');
+      },
+
+      async setNGOTab(tabName) {
+        Store.activeTab = tabName;
+        const container = document.getElementById('ngo-tab-view');
+        if (!container) return;
+
+        const ngo = await NGOService.getCurrentNGO();
+        const ngoId = ngo ? ngo.id : 'ngo_demo';
+
+        const allSurplus = await DB.getAll('surplus_food');
+        const allInstitutions = await DB.getAll('institutions');
+        const allPartnerships = await DB.getAll('partnerships');
+        const allRequests = await DB.getAll('food_requests');
+        const allDeliveries = await DB.getAll('deliveries');
+
+        const myPartnerships = allPartnerships.filter(p => p.ngo_id === ngoId);
+        const activePartnerInstIds = myPartnerships.filter(p => p.status === 'ACCEPTED').map(p => p.institution_id);
+
+        const now = new Date();
+        const partnerSurplus = allSurplus.filter(s => {
+          return activePartnerInstIds.includes(s.institution_id) && 
+                 s.available_quantity > 0 && 
+                 new Date(s.deadline) > now;
+        });
+
+        const ngoRequests = allRequests.filter(r => r.ngo_id === ngoId);
+        const ngoDeliveries = allDeliveries.filter(d => d.ngo_id === ngoId);
+
+        if (tabName === 'available') {
+          container.innerHTML = `
+            <div class="space-y-6">
+              <!-- Safety & Connection Policy Banner -->
+              <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-sm text-emerald-950">Connection Partner Surplus Feed</h4>
+                    <p class="text-xs text-emerald-800">Only verified food from your accepted Connection Partner kitchens is visible to preserve safety and chain-of-custody.</p>
+                  </div>
+                </div>
+                <button onclick="App.setNGOTab('partners')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition shrink-0">
+                  Manage Connection Partners &rarr;
+                </button>
+              </div>
+
+              <!-- Available Food Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${partnerSurplus.length === 0 ? `
+                  <div class="col-span-3 p-12 text-center bg-white rounded-2xl border border-slate-200">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <p class="text-slate-700 font-bold">No active surplus from your connected partners right now.</p>
+                    <p class="text-xs text-slate-400 mt-1">If you need food, connect with more nearby institutional kitchens in the "Connection Partners" tab.</p>
+                    <button onclick="App.setNGOTab('partners')" class="mt-4 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold transition">
+                      Find &amp; Connect with Kitchens
+                    </button>
+                  </div>
+                ` : partnerSurplus.map(s => {
+                  const dist = Geo.calculateDistance(ngo ? ngo.lat : 13.08, ngo ? ngo.lng : 80.27, s.lat, s.lng);
+                  return `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-4">
+                      <div>
+                        <div class="flex items-start justify-between gap-2">
+                          <h4 class="font-bold text-slate-900 text-base leading-snug">${s.food_name}</h4>
+                          <span class="badge badge-success shrink-0">${s.available_quantity} Meals</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5 mt-1">
+                          <span class="text-xs font-semibold text-slate-700">${s.institution_name}</span>
+                          <span class="badge badge-purple text-[10px]">Partner</span>
+                        </div>
+                        <div class="mt-3 space-y-1 text-xs text-slate-500">
+                          <div class="flex items-center space-x-1.5">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                            <span>${s.location} &bull; <b class="text-slate-700">${dist} km away</b></span>
+                          </div>
+                          <div class="flex items-center space-x-1.5">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>Deadline: <span class="text-amber-700 font-medium">${UI.formatDate(s.deadline)}</span></span>
+                          </div>
+                        </div>
+                      </div>
+                      <button onclick="NGOService.openRequestModal('${s.id}')" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                        REQUEST FOOD
+                      </button>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'partners') {
+          // NGO Connection Partners Tab
+          const connectedInstitutions = myPartnerships.filter(p => p.status === 'ACCEPTED');
+          const pendingInstitutions = myPartnerships.filter(p => p.status === 'PENDING');
+          const partnerInstIds = myPartnerships.map(p => p.institution_id);
+          const unconnectedInstitutions = allInstitutions.filter(i => !partnerInstIds.includes(i.id));
+
+          container.innerHTML = `
+            <div class="space-y-6">
+              <!-- Active Connected Partners -->
+              <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <h3 class="font-bold text-sm text-slate-800">My Active Connection Partner Kitchens (${connectedInstitutions.length})</h3>
+                  <span class="badge badge-success">Approved Access</span>
+                </div>
+                <div class="divide-y divide-slate-100">
+                  ${connectedInstitutions.length === 0 ? `
+                    <div class="p-6 text-center text-slate-400 text-xs">No active partner connections yet. Connect with institutional kitchens below.</div>
+                  ` : connectedInstitutions.map(ci => `
+                    <div class="p-4 flex justify-between items-center">
+                      <div>
+                        <span class="font-bold text-slate-900 block">${ci.institution_name}</span>
+                        <span class="text-xs text-slate-400">Connected since: ${UI.formatDate(ci.accepted_at || ci.created_at)}</span>
+                      </div>
+                      <button onclick="App.setNGOTab('available')" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-semibold transition">
+                        View Surplus &rarr;
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Pending Connection Requests -->
+              ${pendingInstitutions.length > 0 ? `
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div class="p-4 border-b border-slate-100 bg-amber-50/40 flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-slate-800">Pending Connection Requests (${pendingInstitutions.length})</h3>
+                    <span class="badge badge-warning">Awaiting Kitchen Review</span>
+                  </div>
+                  <div class="divide-y divide-slate-100">
+                    ${pendingInstitutions.map(pi => `
+                      <div class="p-4 flex justify-between items-center">
+                        <div>
+                          <span class="font-bold text-slate-800 block">${pi.institution_name}</span>
+                          <span class="text-xs text-slate-400">Request submitted: ${UI.formatDate(pi.created_at)}</span>
+                        </div>
+                        <span class="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 font-medium">Pending Acceptance</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Discover and Connect with Institutional Kitchens -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div>
+                  <h3 class="font-bold text-sm text-slate-800">Institutional Kitchens Directory</h3>
+                  <p class="text-xs text-slate-500">Send a Connection Partner request to unlock that institution's surplus food allocations.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  ${unconnectedInstitutions.length === 0 ? `
+                    <div class="col-span-3 text-xs text-slate-400 p-4">You have connected or requested connections with all registered institutional kitchens.</div>
+                  ` : unconnectedInstitutions.map(inst => {
+                    const dist = Geo.calculateDistance(ngo ? ngo.lat : 13.08, ngo ? ngo.lng : 80.27, inst.lat, inst.lng);
+                    return `
+                      <div class="border rounded-2xl p-4 flex flex-col justify-between space-y-3 bg-slate-50/50 hover:bg-white hover:shadow transition">
+                        <div>
+                          <span class="font-bold text-slate-900 text-sm block">${inst.name}</span>
+                          <span class="text-xs text-brand-700 font-semibold block">${inst.institution_type}</span>
+                          <p class="text-xs text-slate-500 mt-1">${inst.location} &bull; <b>${dist} km away</b></p>
+                        </div>
+                        <button onclick="PartnershipService.requestConnection('${ngoId}', '${inst.id}', 'NGO').then(() => App.setNGOTab('partners'))" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                          Connect Request
+                        </button>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'requests') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b border-slate-100 font-bold text-sm text-slate-800">My Food Allocation Requests</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b text-slate-600 font-semibold uppercase">
+                    <tr>
+                      <th class="p-3.5">Date</th>
+                      <th class="p-3.5">Food Requested</th>
+                      <th class="p-3.5">Institution</th>
+                      <th class="p-3.5">Quantity</th>
+                      <th class="p-3.5">Pickup Time</th>
+                      <th class="p-3.5">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${ngoRequests.length === 0 ? `
+                      <tr><td colspan="6" class="p-8 text-center text-slate-400">No requests submitted yet.</td></tr>
+                    ` : ngoRequests.map(r => `
+                      <tr>
+                        <td class="p-3.5 font-medium text-slate-800">${UI.formatDate(r.created_at)}</td>
+                        <td class="p-3.5 font-bold text-slate-800">${r.food_name}</td>
+                        <td class="p-3.5">${r.institution_name}</td>
+                        <td class="p-3.5 font-bold text-brand-600">${r.requested_quantity} meals</td>
+                        <td class="p-3.5 font-medium">${r.requested_pickup_time}</td>
+                        <td class="p-3.5"><span class="badge ${r.status === 'APPROVED' ? 'badge-success' : r.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'}">${r.status}</span></td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'deliveries') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b border-slate-100">
+                <h3 class="font-bold text-sm text-slate-800">Deliveries &amp; Receipt Confirmation</h3>
+                <p class="text-xs text-slate-500">Confirm receipt upon delivery arrival to record saved meals into verifiable impact statistics.</p>
+              </div>
+              <div class="divide-y divide-slate-100">
+                ${ngoDeliveries.length === 0 ? `
+                  <div class="p-8 text-center text-slate-400 text-xs">No active deliveries dispatched to your NGO yet.</div>
+                ` : ngoDeliveries.map(d => {
+                  const isCompleted = d.status === 'COMPLETED' || d.receiver_confirmed;
+                  return `
+                    <div class="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                          <span class="text-sm font-bold text-slate-900">${d.quantity} meals: ${d.food_name}</span>
+                          <span class="badge ${isCompleted ? 'badge-success' : 'badge-info'}">${d.status.replace(/_/g, ' ')}</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Source: ${d.institution_name} &bull; Destination: ${d.destination}</p>
+                        <p class="text-[11px] text-slate-400">Scheduled: ${d.pickup_time}</p>
+                      </div>
+                      <div>
+                        ${!isCompleted ? `
+                          <button onclick="NGOService.confirmReceived('${d.id}')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span>CONFIRM RECEIVED</span>
+                          </button>
+                        ` : `
+                          <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg flex items-center space-x-1">
+                            <span>&check; Received &amp; Logged to Impact</span>
+                          </span>
+                        `}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }
+      },
+
+      async renderAdminView() {
+        const institutions = await DB.getAll('institutions');
+        const ngos = await DB.getAll('ngos');
+        const foodRecords = await DB.getAll('food_records');
+        const deliveries = await DB.getAll('deliveries');
+        const auditLogs = await DB.getAll('audit_logs');
+        const partnerships = await DB.getAll('partnerships');
+
+        const totalPrepared = foodRecords.reduce((s, r) => s + (Number(r.quantity_prepared) || 0), 0);
+        const totalRedistributed = deliveries
+          .filter(d => d.status === 'COMPLETED' || d.status === 'RECEIVED')
+          .reduce((s, d) => s + (Number(d.quantity) || 0), 0);
+        const wastePreventedKg = (totalRedistributed * 0.45).toFixed(0);
+
+        const root = document.getElementById('app-root');
+        root.innerHTML = `
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div>
+                <h1 class="text-2xl font-bold text-deep-900">System Administration &amp; Governance</h1>
+                <p class="text-sm text-slate-500 mt-1">Platform-wide auditability, NGO verification, and circular food impact telemetry</p>
+              </div>
+              <span class="badge badge-info">Administrator Mode</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Institutions</span>
+                <span class="text-2xl font-bold text-slate-900 mt-1 block">${institutions.length}</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Verified NGOs</span>
+                <span class="text-2xl font-bold text-emerald-600 mt-1 block">${ngos.filter(n => n.is_verified).length}</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Partnerships</span>
+                <span class="text-2xl font-bold text-purple-600 mt-1 block">${partnerships.filter(p => p.status === 'ACCEPTED').length}</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Redistributed</span>
+                <span class="text-2xl font-bold text-brand-600 mt-1 block">${totalRedistributed}</span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Waste Prevented</span>
+                <span class="text-2xl font-bold text-teal-600 mt-1 block">${wastePreventedKg} <span class="text-xs">kg</span></span>
+              </div>
+              <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Deliveries</span>
+                <span class="text-2xl font-bold text-indigo-600 mt-1 block">${deliveries.length}</span>
+              </div>
+            </div>
+
+            <div class="border-b border-slate-200 flex space-x-6">
+              <button onclick="App.setAdminTab('ngos')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'ngos' ? 'border-deep-900 text-deep-900' : 'border-transparent text-slate-500 hover:text-slate-800'}">NGO Verification</button>
+              <button onclick="App.setAdminTab('institutions')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'institutions' ? 'border-deep-900 text-deep-900' : 'border-transparent text-slate-500 hover:text-slate-800'}">Institutions</button>
+              <button onclick="App.setAdminTab('audit')" class="pb-3 text-sm font-semibold border-b-2 transition ${Store.activeTab === 'audit' ? 'border-deep-900 text-deep-900' : 'border-transparent text-slate-500 hover:text-slate-800'}">Audit Logs (${auditLogs.length})</button>
+            </div>
+
+            <div id="admin-tab-view"></div>
+          </div>
+        `;
+        this.setAdminTab(Store.activeTab || 'ngos');
+      },
+
+      async setAdminTab(tabName) {
+        Store.activeTab = tabName;
+        const container = document.getElementById('admin-tab-view');
+        if (!container) return;
+
+        const institutions = await DB.getAll('institutions');
+        const ngos = await DB.getAll('ngos');
+        const auditLogs = await DB.getAll('audit_logs');
+
+        if (tabName === 'ngos') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b font-bold text-sm text-slate-800">NGO Verification Directory</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b text-slate-600 uppercase font-semibold">
+                    <tr>
+                      <th class="p-3">NGO Name</th>
+                      <th class="p-3">Govt / Darpan ID</th>
+                      <th class="p-3">Location</th>
+                      <th class="p-3">Contact</th>
+                      <th class="p-3">Status</th>
+                      <th class="p-3 text-right">Verification Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${ngos.map(n => `
+                      <tr>
+                        <td class="p-3 font-bold text-slate-800">${n.name}</td>
+                        <td class="p-3 font-mono text-slate-600">${n.verification_info || 'REG-PENDING'}</td>
+                        <td class="p-3 text-slate-600">${n.location}</td>
+                        <td class="p-3 text-slate-600">${n.contact_person}</td>
+                        <td class="p-3"><span class="badge ${n.is_verified ? 'badge-success' : 'badge-warning'}">${n.is_verified ? 'VERIFIED' : 'PENDING'}</span></td>
+                        <td class="p-3 text-right">
+                          <button onclick="AdminService.verifyNGO('${n.id}', ${!n.is_verified})" class="px-3 py-1 rounded-lg text-xs font-semibold ${n.is_verified ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'} border transition">
+                            ${n.is_verified ? 'Revoke Status' : 'Verify & Approve'}
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'institutions') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b font-bold text-sm text-slate-800">Institutional Kitchens</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b text-slate-600 uppercase font-semibold">
+                    <tr>
+                      <th class="p-3">Institution Name</th>
+                      <th class="p-3">Kitchen Type</th>
+                      <th class="p-3">Location</th>
+                      <th class="p-3">Contact Person</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${institutions.map(i => `
+                      <tr>
+                        <td class="p-3 font-bold text-slate-800">${i.name}</td>
+                        <td class="p-3">${i.institution_type}</td>
+                        <td class="p-3">${i.location}</td>
+                        <td class="p-3">${i.contact_person} &bull; ${i.email}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else if (tabName === 'audit') {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div class="p-4 border-b font-bold text-sm text-slate-800">Audit Logs</div>
+              <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-left text-xs font-mono">
+                  <thead class="bg-slate-50 border-b text-slate-600 uppercase font-semibold sticky top-0">
+                    <tr>
+                      <th class="p-3">Timestamp</th>
+                      <th class="p-3">Role</th>
+                      <th class="p-3">Action</th>
+                      <th class="p-3">Entity</th>
+                      <th class="p-3">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${auditLogs.slice().reverse().map(l => `
+                      <tr>
+                        <td class="p-3 text-slate-500">${UI.formatDate(l.timestamp)}</td>
+                        <td class="p-3"><span class="badge badge-neutral">${l.role}</span></td>
+                        <td class="p-3 font-bold text-deep-900">${l.action}</td>
+                        <td class="p-3">${l.entity}:${l.entity_id}</td>
+                        <td class="p-3 text-slate-500 max-w-sm truncate">${l.details}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+      },
+
+      async openAIModal() {
+        const prediction = await AIPredictor.generatePrediction('Lunch', 850);
+        const html = `
+          <div class="space-y-4 text-xs">
+            <div class="p-3.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl">
+              <span class="text-xs font-bold text-emerald-800 uppercase block">Statistical Demand Forecast</span>
+              <p class="text-slate-600 mt-1">Estimates tomorrow's required preparation based on historical consumption variance and expected attendance.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-600 uppercase mb-1">Target Meal Service</label>
+                <select id="ai-meal" onchange="App.runAIPrediction()" class="w-full px-3 py-2 border rounded-xl bg-white">
+                  <option value="Lunch">Lunch Service</option>
+                  <option value="Dinner">Dinner Service</option>
+                  <option value="Breakfast">Breakfast Service</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-600 uppercase mb-1">Expected Attendance</label>
+                <input id="ai-people" type="number" value="850" min="50" oninput="App.runAIPrediction()" class="w-full px-3 py-2 border rounded-xl">
+              </div>
+            </div>
+
+            <div id="ai-prediction-results" class="p-4 bg-slate-50 border rounded-xl space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Model Recommendation:</span>
+                <span class="text-lg font-extrabold text-brand-600">${prediction.recommended_prep} meals</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-600">
+                <span>Expected On-Site Consumption:</span>
+                <span class="font-bold">${prediction.expected_consumption} meals</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-600">
+                <span>Expected Buffer / Surplus:</span>
+                <span class="font-bold text-amber-600">${prediction.expected_surplus} meals</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-600">
+                <span>Waste Risk Assessment:</span>
+                <span class="badge ${prediction.waste_risk === 'LOW' ? 'badge-success' : 'badge-warning'}">${prediction.waste_risk}</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-600">
+                <span>Algorithm Confidence:</span>
+                <span class="font-semibold text-deep-900">${prediction.confidence_pct}%</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800">
+              <b>Important Governance Notice:</b> ${prediction.disclaimer}
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+              <button onclick="UI.closeActionModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl">Close</button>
+              <button onclick="App.applyAIPredictionToKitchen(${prediction.recommended_prep})" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl">Create Batch with this Value</button>
+            </div>
+          </div>
+        `;
+        UI.openActionModal('AI Demand Prediction Engine', html, 'max-w-md');
+      },
+
+      async runAIPrediction() {
+        const meal = document.getElementById('ai-meal').value;
+        const people = Number(document.getElementById('ai-people').value) || 850;
+        const pred = await AIPredictor.generatePrediction(meal, people);
+
+        const container = document.getElementById('ai-prediction-results');
+        if (container) {
+          container.innerHTML = `
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500">Model Recommendation:</span>
+              <span class="text-lg font-extrabold text-brand-600">${pred.recommended_prep} meals</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Expected On-Site Consumption:</span>
+              <span class="font-bold">${pred.expected_consumption} meals</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Expected Buffer / Surplus:</span>
+              <span class="font-bold text-amber-600">${pred.expected_surplus} meals</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Waste Risk Assessment:</span>
+              <span class="badge ${pred.waste_risk === 'LOW' ? 'badge-success' : 'badge-warning'}">${pred.waste_risk}</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Algorithm Confidence:</span>
+              <span class="font-semibold text-deep-900">${pred.confidence_pct}%</span>
+            </div>
+          `;
+        }
+      },
+
+      applyAIPredictionToKitchen(qty) {
+        UI.closeActionModal();
+        InstitutionService.openAddFoodModal();
+        setTimeout(() => {
+          const prepInput = document.getElementById('food-prep');
+          if (prepInput) {
+            prepInput.value = qty;
+            InstitutionService.recalcCalculations();
+          }
+        }, 100);
+      },
+
+      async openNotificationsModal() {
+        const all = await DB.getAll('notifications');
+        const role = Store.currentUser ? Store.currentUser.role : '';
+        const uid = Store.currentUser ? Store.currentUser.id : '';
+        const userNotes = all.filter(n => n.user_id === uid || n.role === role).reverse();
+
+        const html = `
+          <div class="space-y-3">
+            <div class="flex justify-between items-center pb-2 border-b">
+              <span class="text-xs font-bold text-slate-500 uppercase">Activity Log &amp; Alerts</span>
+              <button onclick="App.markAllNotificationsRead()" class="text-xs text-brand-600 font-semibold hover:underline">Mark all as read</button>
+            </div>
+            <div class="max-h-80 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              ${userNotes.length === 0 ? `
+                <div class="p-6 text-center text-slate-400 text-xs">No notifications yet.</div>
+              ` : userNotes.map(n => `
+                <div class="p-3 rounded-xl border ${n.read ? 'bg-white border-slate-100 text-slate-600' : 'bg-emerald-50/60 border-emerald-200 text-slate-900'} text-xs">
+                  <div class="flex justify-between items-start">
+                    <span class="font-bold text-slate-900">${n.title}</span>
+                    <span class="text-[10px] text-slate-400">${UI.formatDate(n.created_at)}</span>
+                  </div>
+                  <p class="mt-1 text-slate-600">${n.message}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        UI.openActionModal('In-App Notifications', html, 'max-w-md');
+      },
+
+      async markAllNotificationsRead() {
+        const all = await DB.getAll('notifications');
+        for (const n of all) {
+          n.read = true;
+          await DB.put('notifications', n);
+        }
+        await Notifications.refreshCount();
+        UI.closeActionModal();
+        UI.showToast('All notifications marked as read.');
+      },
+
+      async seedDatabase(notify = true) {
+        await DB.clearAll();
+
+        const pAdmin = await CryptoUtil.hash('admin123');
+        const pKitchen = await CryptoUtil.hash('kitchen123');
+        const pNGO = await CryptoUtil.hash('ngo123');
+
+        // Accounts
+        await DB.put('users', {
+          id: 'usr_admin',
+          org_id: 'org_admin',
+          name: 'Chief Administrator',
+          email: 'admin@foodloop.org',
+          password_hash: pAdmin,
+          role: 'ADMIN',
+          status: 'ACTIVE',
+          created_at: new Date().toISOString()
+        });
+
+        await DB.put('users', {
+          id: 'usr_inst',
+          org_id: 'inst_central',
+          name: 'Grand Tech University Dining',
+          email: 'manager@grandtech.edu',
+          password_hash: pKitchen,
+          role: 'INSTITUTION',
+          status: 'ACTIVE',
+          created_at: new Date().toISOString()
+        });
+
+        await DB.put('users', {
+          id: 'usr_ngo',
+          org_id: 'ngo_trust',
+          name: 'City Relief Food Trust',
+          email: 'director@cityrelief.org',
+          password_hash: pNGO,
+          role: 'NGO',
+          status: 'ACTIVE',
+          created_at: new Date().toISOString()
+        });
+
+        // Institution Organization
+        await DB.put('institutions', {
+          id: 'inst_central',
+          user_id: 'usr_inst',
+          name: 'Grand Tech University Dining Complex',
+          email: 'manager@grandtech.edu',
+          phone: '+91 98765 11223',
+          address: 'Main Campus, Tech Avenue',
+          location: 'Chennai Central',
+          institution_type: 'University Canteen',
+          contact_person: 'Executive Chef Vikram Rao',
+          lat: 13.0827,
+          lng: 80.2707,
+          created_at: new Date().toISOString()
+        });
+
+        // NGO Organization
+        await DB.put('ngos', {
+          id: 'ngo_trust',
+          user_id: 'usr_ngo',
+          name: 'City Relief Food Trust',
+          email: 'director@cityrelief.org',
+          phone: '+91 98400 99881',
+          address: 'Shelter Hub 4, Harbour Road',
+          location: 'Chennai Harbour',
+          verification_info: 'DARPAN-TN-2024-8821',
+          contact_person: 'Ananya Deshmukh',
+          is_verified: true,
+          lat: 13.0900,
+          lng: 80.2850,
+          created_at: new Date().toISOString()
+        });
+
+        // Pre-configure an ACCEPTED partnership so demo is immediately testable
+        await DB.put('partnerships', {
+          id: 'part_seed_1',
+          institution_id: 'inst_central',
+          institution_name: 'Grand Tech University Dining Complex',
+          ngo_id: 'ngo_trust',
+          ngo_name: 'City Relief Food Trust',
+          status: 'ACCEPTED',
+          requested_by: 'NGO',
+          created_at: new Date().toISOString(),
+          accepted_at: new Date().toISOString()
+        });
+
+        // Sample Production Record (1000 prepared, 800 consumed = 200 surplus)
+        const today = new Date().toISOString().split('T')[0];
+        const deadlineLater = new Date(Date.now() + 5 * 3600 * 1000).toISOString();
+
+        const foodRec1 = {
+          id: 'rec_sample_1',
+          institution_id: 'inst_central',
+          date: today,
+          meal_type: 'Lunch',
+          category: 'Cooked Meals (Rice/Curry)',
+          food_name: 'Steamed Rice with Dal & Mixed Vegetable Gravy',
+          quantity_prepared: 1000,
+          expected_people: 950,
+          quantity_consumed: 800,
+          surplus_quantity: 200,
+          waste_quantity: 0,
+          preparation_time: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+          storage_condition: 'Hot Hold (>60°C)',
+          deadline: deadlineLater,
+          notes: 'Freshly prepared, sealed in stainless food-grade thermal containers',
+          created_at: new Date().toISOString()
+        };
+        await DB.put('food_records', foodRec1);
+
+        await DB.put('surplus_food', {
+          id: 'surp_rec_sample_1',
+          food_record_id: 'rec_sample_1',
+          institution_id: 'inst_central',
+          institution_name: 'Grand Tech University Dining Complex',
+          food_name: 'Steamed Rice with Dal & Mixed Vegetable Gravy',
+          total_quantity: 200,
+          available_quantity: 200,
+          reserved_quantity: 0,
+          location: 'Chennai Central',
+          lat: 13.0827,
+          lng: 80.2707,
+          preparation_time: foodRec1.preparation_time,
+          deadline: deadlineLater,
+          storage_condition: 'Hot Hold (>60°C)',
+          status: 'AVAILABLE',
+          created_at: new Date().toISOString()
+        });
+
+        await DB.put('food_safety_records', {
+          id: 'safe_rec_sample_1',
+          food_record_id: 'rec_sample_1',
+          institution_id: 'inst_central',
+          food_name: 'Steamed Rice with Dal & Mixed Vegetable Gravy',
+          preparation_time: foodRec1.preparation_time,
+          storage_condition: 'Hot Hold (>60°C)',
+          deadline: deadlineLater,
+          status: 'SAFE_WITHIN_WINDOW',
+          safety_notes: 'Hot-holding monitored at constant 64°C'
+        });
+
+        await DB.put('audit_logs', {
+          id: 'log_seed',
+          user_id: 'system',
+          role: 'SYSTEM',
+          action: 'SEED_DATABASE',
+          entity: 'all',
+          entity_id: 'init',
+          details: 'Initialized full relational tables with active Connection Partner test link',
+          timestamp: new Date().toISOString()
+        });
+
+        if (notify) {
+          UI.showToast('Sample dataset loaded with active Connection Partner test link!');
+          this.navigate(Store.currentView);
+        }
+      },
+
+      async purgeDatabase() {
+        if (!confirm('Warning: This will purge all local IndexedDB records. Continue?')) return;
+        await DB.clearAll();
+        Store.setSession(null);
+        UI.showToast('Database wiped clean.');
+        location.reload();
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      App.init();
+    });
+  </script>
+</body>
+</html>
+```
